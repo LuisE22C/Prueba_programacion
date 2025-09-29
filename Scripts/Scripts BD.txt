@@ -1,0 +1,221 @@
+CREATE DATABASE IF NOT EXISTS taller_servicios;
+USE taller_servicios;
+
+-- Tablas
+CREATE TABLE cliente (
+    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    telefono VARCHAR(20),
+    email VARCHAR(150),
+    direccion VARCHAR(200)
+);
+
+CREATE TABLE tecnico (
+    id_tecnico INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    especialidad VARCHAR(100),
+    telefono VARCHAR(20),
+    email VARCHAR(150)
+);
+
+CREATE TABLE marca (
+    id_marca INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_marca VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE equipo (
+    id_equipo INT AUTO_INCREMENT PRIMARY KEY,
+    id_marca INT NOT NULL,
+    tipo_equipo VARCHAR(50) NOT NULL,   -- laptop, smartphone, impresora...
+    modelo VARCHAR(100),
+    serie VARCHAR(100),
+    descripcion TEXT,
+    FOREIGN KEY (id_marca) REFERENCES marca(id_marca)
+);
+
+CREATE TABLE servicio (
+    id_servicio INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT NOT NULL,
+    id_equipo INT NOT NULL,
+    id_tecnico INT NOT NULL,
+    fecha_recepcion DATE NOT NULL,
+    problema_reportado TEXT,
+    estado ENUM('recibido','reparando','finalizado','entregado') DEFAULT 'recibido',
+    diagnostico TEXT,
+    solucion TEXT,
+    fecha_entrega DATE,
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    FOREIGN KEY (id_equipo) REFERENCES equipo(id_equipo),
+    FOREIGN KEY (id_tecnico) REFERENCES tecnico(id_tecnico)
+);
+
+
+-- Store Procedured
+
+USE taller_servicios;
+
+DELIMITER $$
+
+-- Insertar cliente
+CREATE PROCEDURE sp_insertar_cliente (
+    IN p_nombre VARCHAR(100),
+    IN p_apellido VARCHAR(100),
+    IN p_telefono VARCHAR(20),
+    IN p_email VARCHAR(150),
+    IN p_direccion VARCHAR(200)
+)
+BEGIN
+    INSERT INTO cliente (nombre, apellido, telefono, email, direccion)
+    VALUES (p_nombre, p_apellido, p_telefono, p_email, p_direccion);
+END $$
+
+-- Insertar técnico
+CREATE PROCEDURE sp_insertar_tecnico (
+    IN p_nombre VARCHAR(100),
+    IN p_apellido VARCHAR(100),
+    IN p_especialidad VARCHAR(100),
+    IN p_telefono VARCHAR(20),
+    IN p_email VARCHAR(150)
+)
+BEGIN
+    INSERT INTO tecnico (nombre, apellido, especialidad, telefono, email)
+    VALUES (p_nombre, p_apellido, p_especialidad, p_telefono, p_email);
+END $$
+
+-- Insertar marca
+CREATE PROCEDURE sp_insertar_marca (
+    IN p_nombre_marca VARCHAR(100)
+)
+BEGIN
+    INSERT INTO marca (nombre_marca)
+    VALUES (p_nombre_marca);
+END $$
+
+-- Insertar equipo
+CREATE PROCEDURE sp_insertar_equipo (
+    IN p_id_marca INT,
+    IN p_tipo_equipo VARCHAR(50),
+    IN p_modelo VARCHAR(100),
+    IN p_serie VARCHAR(100),
+    IN p_descripcion TEXT
+)
+BEGIN
+    INSERT INTO equipo (id_marca, tipo_equipo, modelo, serie, descripcion)
+    VALUES (p_id_marca, p_tipo_equipo, p_modelo, p_serie, p_descripcion);
+END $$
+
+-- Insertar servicio
+CREATE PROCEDURE sp_insertar_servicio (
+    IN p_id_cliente INT,
+    IN p_id_equipo INT,
+    IN p_id_tecnico INT,
+    IN p_fecha_recepcion DATE,
+    IN p_problema_reportado TEXT
+)
+BEGIN
+    INSERT INTO servicio (id_cliente, id_equipo, id_tecnico, fecha_recepcion, problema_reportado)
+    VALUES (p_id_cliente, p_id_equipo, p_id_tecnico, p_fecha_recepcion, p_problema_reportado);
+END $$
+
+-- Actualizar estado del servicio
+CREATE PROCEDURE sp_actualizar_estado_servicio (
+    IN p_id_servicio INT,
+    IN p_estado ENUM('recibido','reparando','finalizado','entregado'),
+    IN p_fecha_entrega DATE
+)
+BEGIN
+    UPDATE servicio
+    SET estado = p_estado,
+        fecha_entrega = IF(p_estado='entregado', p_fecha_entrega, fecha_entrega)
+    WHERE id_servicio = p_id_servicio;
+END $$
+
+-- Actualizar diagnóstico y solución del servicio
+CREATE PROCEDURE sp_actualizar_diagnostico_solucion (
+    IN p_id_servicio INT,
+    IN p_diagnostico TEXT,
+    IN p_solucion TEXT
+)
+BEGIN
+    UPDATE servicio
+    SET diagnostico = p_diagnostico,
+        solucion = p_solucion
+    WHERE id_servicio = p_id_servicio;
+END $$
+
+-- Listar servicios por estado
+CREATE PROCEDURE sp_listar_servicios_por_estado (
+    IN p_estado VARCHAR(20)
+)
+BEGIN
+    SELECT s.id_servicio,
+           c.nombre AS cliente,
+           e.tipo_equipo,
+           s.estado,
+           s.fecha_recepcion
+    FROM servicio s
+    INNER JOIN cliente c ON s.id_cliente = c.id_cliente
+    INNER JOIN equipo e ON s.id_equipo = e.id_equipo
+    WHERE s.estado = p_estado;
+END $$
+
+-- Listar servicios por técnico
+CREATE PROCEDURE sp_listar_servicios_por_tecnico (
+    IN p_id_tecnico INT
+)
+BEGIN
+    SELECT s.id_servicio,
+           c.nombre AS cliente,
+           e.tipo_equipo,
+           s.estado,
+           s.fecha_recepcion
+    FROM servicio s
+    INNER JOIN cliente c ON s.id_cliente = c.id_cliente
+    INNER JOIN equipo e ON s.id_equipo = e.id_equipo
+    WHERE s.id_tecnico = p_id_tecnico;
+END $$
+
+-- Detalle completo de un servicio
+CREATE PROCEDURE sp_detalle_servicio (
+    IN p_id_servicio INT
+)
+BEGIN
+    SELECT s.id_servicio,
+           s.fecha_recepcion,
+           s.problema_reportado,
+           s.estado,
+           s.diagnostico,
+           s.solucion,
+           s.fecha_entrega,
+           c.nombre AS cliente_nombre,
+           c.apellido AS cliente_apellido,
+           t.nombre AS tecnico_nombre,
+           t.apellido AS tecnico_apellido,
+           e.tipo_equipo,
+           e.modelo,
+           m.nombre_marca
+    FROM servicio s
+    INNER JOIN cliente c ON s.id_cliente = c.id_cliente
+    INNER JOIN tecnico t ON s.id_tecnico = t.id_tecnico
+    INNER JOIN equipo e ON s.id_equipo = e.id_equipo
+    INNER JOIN marca m ON e.id_marca = m.id_marca
+    WHERE s.id_servicio = p_id_servicio;
+END $$
+
+DELIMITER ;
+
+
+CALL sp_insertar_cliente('Luis','Perez','555-1234','luis@mail.com','Zona 4');
+CALL sp_insertar_tecnico('Carlos','Gomez','Laptops','555-2222','carlos@mail.com');
+CALL sp_insertar_marca('HP');
+CALL sp_insertar_equipo(1,'Laptop','ProBook','SN12345','Equipo de oficina');
+CALL sp_insertar_servicio(1,1,1,'2025-09-29','No enciende');
+
+CALL sp_actualizar_estado_servicio(1,'reparando',NULL);
+CALL sp_actualizar_diagnostico_solucion(1,'Fuente dañada','Se reemplazó fuente de poder');
+
+CALL sp_listar_servicios_por_estado('reparando');
+CALL sp_listar_servicios_por_tecnico(1);
+CALL sp_detalle_servicio(1);
