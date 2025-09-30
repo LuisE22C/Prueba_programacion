@@ -7,20 +7,20 @@ use Illuminate\Support\Facades\DB;
 
 class MarcaController extends Controller
 {
-    // Listar marcas
+
     public function index()
     {
         $marcas = DB::select("SELECT * FROM marca");
         return view('marcas.index', compact('marcas'));
     }
 
-    // Mostrar formulario de creación
+
     public function create()
     {
         return view('marcas.create');
     }
 
-    // Guardar nueva marca usando SP
+
     public function store(Request $request)
     {
         $request->validate([
@@ -32,7 +32,7 @@ class MarcaController extends Controller
         return redirect()->route('marcas.index')->with('success', 'Marca creada correctamente.');
     }
 
-    // Mostrar formulario de edición
+
     public function edit($id)
     {
         $marca = DB::select("SELECT * FROM marca WHERE id_marca = ?", [$id]);
@@ -42,7 +42,7 @@ class MarcaController extends Controller
         return view('marcas.edit', ['marca' => $marca[0]]);
     }
 
-    // Actualizar marca (sin SP, ejemplo directo)
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -54,7 +54,7 @@ class MarcaController extends Controller
         return redirect()->route('marcas.index')->with('success', 'Marca actualizada correctamente.');
     }
 
-    // Eliminar marca
+
     public function destroy($id)
     {
         DB::delete("DELETE FROM marca WHERE id_marca = ?", [$id]);

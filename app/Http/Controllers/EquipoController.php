@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class EquipoController extends Controller
 {
-    // Listar equipos
+
     public function index()
     {
         $equipos = DB::select("
@@ -19,14 +19,14 @@ class EquipoController extends Controller
         return view('equipos.index', compact('equipos'));
     }
 
-    // Formulario para crear
+ 
     public function create()
     {
         $marcas = DB::select("SELECT * FROM marca ORDER BY nombre_marca ASC");
         return view('equipos.create', compact('marcas'));
     }
 
-    // Guardar usando SP
+
     public function store(Request $request)
     {
         $request->validate([
@@ -48,7 +48,7 @@ class EquipoController extends Controller
         return redirect()->route('equipos.index')->with('success', 'Equipo registrado correctamente.');
     }
 
-    // Editar equipo
+
     public function edit($id)
     {
         $equipo = DB::select("SELECT * FROM equipo WHERE id_equipo = ?", [$id]);
@@ -59,7 +59,7 @@ class EquipoController extends Controller
         return view('equipos.edit', ['equipo' => $equipo[0], 'marcas' => $marcas]);
     }
 
-    // Actualizar equipo (sin SP definido, se usa SQL directo)
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -86,7 +86,7 @@ class EquipoController extends Controller
         return redirect()->route('equipos.index')->with('success', 'Equipo actualizado correctamente.');
     }
 
-    // Eliminar equipo
+
     public function destroy($id)
     {
         DB::delete("DELETE FROM equipo WHERE id_equipo = ?", [$id]);

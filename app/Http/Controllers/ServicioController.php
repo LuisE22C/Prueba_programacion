@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\DB;
 
 class ServicioController extends Controller
 {
-    // Listar todos los servicios
+  
     public function index()
     {
-        // No hay SP específico, se listan todos
+    
         $servicios = DB::select("
             SELECT s.id_servicio, c.nombre AS cliente, e.tipo_equipo, s.estado, s.fecha_recepcion
             FROM servicio s
@@ -22,21 +22,20 @@ class ServicioController extends Controller
         return view('servicios.index', compact('servicios'));
     }
 
-    // Filtrar por estado usando SP
+
     public function listarPorEstado($estado)
     {
         $servicios = DB::select("CALL sp_listar_servicios_por_estado(?)", [$estado]);
         return view('servicios.index', compact('servicios'));
     }
 
-    // Filtrar por técnico usando SP
     public function listarPorTecnico($id)
     {
         $servicios = DB::select("CALL sp_listar_servicios_por_tecnico(?)", [$id]);
         return view('servicios.index', compact('servicios'));
     }
 
-    // Formulario para crear
+  
     public function create()
     {
         $clientes = DB::select("SELECT * FROM cliente ORDER BY nombre ASC");
@@ -51,7 +50,7 @@ class ServicioController extends Controller
         return view('servicios.create', compact('clientes', 'tecnicos', 'equipos'));
     }
 
-    // Guardar servicio usando SP
+ 
     public function store(Request $request)
     {
         $request->validate([
@@ -73,7 +72,7 @@ class ServicioController extends Controller
         return redirect()->route('servicios.index')->with('success', 'Servicio registrado correctamente.');
     }
 
-    // Mostrar detalle de un servicio usando SP
+
     public function show($id)
     {
         $detalle = DB::select("CALL sp_detalle_servicio(?)", [$id]);
@@ -85,7 +84,7 @@ class ServicioController extends Controller
         return view('servicios.show', ['servicio' => $detalle[0]]);
     }
 
-    // Editar diagnóstico, solución y estado
+
     public function edit($id)
     {
         $detalle = DB::select("CALL sp_detalle_servicio(?)", [$id]);
@@ -97,7 +96,7 @@ class ServicioController extends Controller
         return view('servicios.edit', ['servicio' => $detalle[0]]);
     }
 
-    // Actualizar servicio usando SP
+
     public function update(Request $request, $id)
     {
         $request->validate([
@@ -107,14 +106,14 @@ class ServicioController extends Controller
             'solucion' => 'nullable|string'
         ]);
 
-        // 1. Actualizar estado
+
         DB::statement("CALL sp_actualizar_estado_servicio(?, ?, ?)", [
             $id,
             $request->estado,
             $request->fecha_entrega
         ]);
 
-        // 2. Actualizar diagnóstico y solución
+ 
         DB::statement("CALL sp_actualizar_diagnostico_solucion(?, ?, ?)", [
             $id,
             $request->diagnostico,
@@ -124,7 +123,7 @@ class ServicioController extends Controller
         return redirect()->route('servicios.index')->with('success', 'Servicio actualizado correctamente.');
     }
 
-    // Eliminar servicio
+   
     public function destroy($id)
     {
         DB::delete("DELETE FROM servicio WHERE id_servicio = ?", [$id]);
