@@ -2,64 +2,82 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Tecnico;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TecnicoController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $tecnicos = DB::select("SELECT * FROM tecnico");
+        return view('tecnicos.index', compact('tecnicos'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('tecnicos.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'nombre' => 'required|string|max:100',
+            'apellido' => 'required|string|max:100',
+            'especialidad' => 'nullable|string|max:100',
+            'telefono' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:150',
+        ]);
+
+        DB::statement("CALL sp_insertar_tecnico(?, ?, ?, ?, ?)", [
+            $request->nombre,
+            $request->apellido,
+            $request->especialidad,
+            $request->telefono,
+            $request->email,
+        ]);
+
+        return redirect()->route('tecnicos.index')->with('success', 'Técnico creado correctamente.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Tecnico $tecnico)
+    public function edit($id)
     {
-        //
+        $tecnico = DB::select("SELECT * FROM tecnico WHERE id_tecnico = ?", [$id]);
+        if (!$tecnico) {
+            return redirect()->route('tecnicos.index')->with('error', 'Técnico no encontrado');
+        }
+        return view('tecnicos.edit', ['tecnico' => $tecnico[0]]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Tecnico $tecnico)
+    public function update(Request $request, $id)
     {
-        //
+        $request->validate([
+            'nombre' => 'required|string|max:100',
+            'apellido' => 'required|string|max:100',
+            'especialidad' => 'nullable|string|max:100',
+            'telefono' => 'nullable|string|max:20',
+            'email' => 'nullable|email|max:150',
+        ]);
+
+        DB::update("
+            UPDATE tecnico 
+            SET nombre = ?, apellido = ?, especialidad = ?, telefono = ?, email = ? 
+            WHERE id_tecnico = ?",
+            [
+                $request->nombre,
+                $request->apellido,
+                $request->especialidad,
+                $request->telefono,
+                $request->email,
+                $id
+            ]
+        );
+
+        return redirect()->route('tecnicos.index')->with('success', 'Técnico actualizado correctamente.');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Tecnico $tecnico)
+    public function destroy($id)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Tecnico $tecnico)
-    {
-        //
+        DB::delete("DELETE FROM tecnico WHERE id_tecnico = ?", [$id]);
+        return redirect()->route('tecnicos.index')->with('success', 'Técnico eliminado correctamente.');
     }
 }
