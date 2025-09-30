@@ -16,4 +16,6 @@ Route::resource('servicios', ServicioController::class);
 Route::get('servicios/estado/{estado}', [ServicioController::class, 'listarPorEstado'])->name('servicios.estado');
 Route::get('servicios/tecnico/{id}', [ServicioController::class, 'listarPorTecnico'])->name('servicios.tecnico');
 
-
+Route::get('/', function () {
+    return view('home');
+})->name('home');
