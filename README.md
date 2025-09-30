@@ -83,3 +83,7 @@ Los CRUDs de clientes, técnicos, marcas, equipos y servicios utilizan Procedimi
 La vista principal inicio.blade.php funciona como dashboard desde donde puedes acceder a todas las secciones.
 
 Recuerda configurar tu usuario y contraseña de MySQL en el archivo .env antes de ejecutar el proyecto.
+
+*********************************************************************************
+
+Nota: La parte de Algoritmos numericos se encuentra se encuentra en la carpeta que dice README 
